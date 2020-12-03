@@ -25,8 +25,8 @@ const slopesToCheck = [
         if (lineNum % ySlope !== 0) {
           return false
         }
-        const y = (lineNum / ySlope) * xSlope
-        const char = line[y % line.length]
+        const x = (lineNum / ySlope) * xSlope
+        const char = line[x % line.length]
         return char == '#'
       })
       .forEach((res, idx) => (results[idx] += +res))
