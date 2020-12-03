@@ -1,3 +1,4 @@
 *.js
 *.class
 *.txt
+.DS_Store
