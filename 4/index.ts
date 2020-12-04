@@ -1,11 +1,8 @@
 import * as fs from 'fs'
 import * as z from 'zod'
 
-function numericString(min: number, max: number) {
-  return z
-    .string()
-    .refine((str) => z.number().min(min).max(max).check(parseInt(str)))
-}
+const numericString = (min: number, max: number) =>
+  z.string().refine((str) => z.number().min(min).max(max).check(parseInt(str)))
 
 const REQ_FIELD_TO_PARSER = {
   byr: numericString(1920, 2002),
