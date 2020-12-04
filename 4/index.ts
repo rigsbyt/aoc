@@ -29,9 +29,7 @@ const REQ_FIELD_TO_PARSER = {
 }
 
 const PASSPORT_PARSER = z.string().refine((pp) => {
-  const fields = pp.split(/\s+/)
-
-  const fieldMap: { [key: string]: string } = fields.reduce(
+  const ppFields: { [key: string]: string } = pp.split(/\s+/).reduce(
     (prev, curr) => ({
       ...prev,
       [curr.split(':')[0]]: curr.split(':')[1],
@@ -40,8 +38,8 @@ const PASSPORT_PARSER = z.string().refine((pp) => {
   )
 
   return Object.entries(REQ_FIELD_TO_PARSER).every(
-    ([reqField, parser]) =>
-      reqField in fieldMap && parser.check(fieldMap[reqField])
+    ([reqFieldName, parser]) =>
+      reqFieldName in ppFields && parser.check(ppFields[reqFieldName])
   )
 })
 
