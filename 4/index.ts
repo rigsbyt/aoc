@@ -51,8 +51,5 @@ const reqFields = {
   })
 
   console.log(validOrNot.length)
-
-  const valid = validOrNot.filter((val) => val)
-
-  console.log(valid.length)
+  console.log(validOrNot.filter((val) => val).length)
 })()
