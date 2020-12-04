@@ -28,28 +28,28 @@ const reqFields = {
     .refine((str) => numericString(0, 999999999).check(str)),
 }
 
+const PASSPORT_PARSER = z.string().refine((pp) => {
+  const fields = pp.split(/\s+/)
+
+  const fieldMap: { [key: string]: string } = fields.reduce(
+    (prev, curr) => ({
+      ...prev,
+      [curr.split(':')[0]]: curr.split(':')[1],
+    }),
+    {}
+  )
+
+  return Object.entries(reqFields).every(
+    ([reqField, parser]) =>
+      reqField in fieldMap && parser.check(fieldMap[reqField])
+  )
+})
+
 ;(() => {
   const file = fs.readFileSync(process.argv[2])
 
   const passports = file.toString().split('\n\n')
 
-  const validOrNot = passports.map((pp) => {
-    const fields = pp.split(/\s+/)
-
-    const fieldMap: { [key: string]: string } = fields.reduce(
-      (prev, curr) => ({
-        ...prev,
-        [curr.split(':')[0]]: curr.split(':')[1],
-      }),
-      {}
-    )
-
-    return Object.entries(reqFields).every(
-      ([reqField, parser]) =>
-        reqField in fieldMap && parser.check(fieldMap[reqField])
-    )
-  })
-
-  console.log(validOrNot.length)
-  console.log(validOrNot.filter((val) => val).length)
+  console.log(passports.length)
+  console.log(passports.filter((pp) => PASSPORT_PARSER.check(pp)).length)
 })()
