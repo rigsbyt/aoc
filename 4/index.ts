@@ -7,7 +7,7 @@ function numericString(min: number, max: number) {
     .refine((str) => z.number().min(min).max(max).check(parseInt(str)))
 }
 
-const reqFields = {
+const REQ_FIELD_TO_PARSER = {
   byr: numericString(1920, 2002),
   iyr: numericString(2010, 2020),
   eyr: numericString(2020, 2030),
@@ -39,7 +39,7 @@ const PASSPORT_PARSER = z.string().refine((pp) => {
     {}
   )
 
-  return Object.entries(reqFields).every(
+  return Object.entries(REQ_FIELD_TO_PARSER).every(
     ([reqField, parser]) =>
       reqField in fieldMap && parser.check(fieldMap[reqField])
   )
