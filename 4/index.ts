@@ -1,41 +1,31 @@
 import * as fs from 'fs'
 import * as z from 'zod'
 
+function numericString(min: number, max: number) {
+  return z
+    .string()
+    .refine((str) => z.number().min(min).max(max).check(parseInt(str)))
+}
+
 const reqFields = {
-  byr: z
-    .string()
-    .refine((str) => z.number().min(1920).max(2002).check(parseInt(str))),
-  iyr: z
-    .string()
-    .refine((str) => z.number().min(2010).max(2020).check(parseInt(str))),
-  eyr: z
-    .string()
-    .refine((str) => z.number().min(2020).max(2030).check(parseInt(str))),
+  byr: numericString(1920, 2002),
+  iyr: numericString(2010, 2020),
+  eyr: numericString(2020, 2030),
   hgt: z.string().refine((str) => {
     const match = str.match(/([0-9]+)((cm|in))/)
     if (!match) {
       return false
     }
     const numParser =
-      match[2] === 'cm'
-        ? z.number().min(150).max(193).check(parseInt(str))
-        : z.number().min(59).max(76).check(parseInt(str))
-    return z
-      .string()
-      .refine((str) => numParser)
-      .check(match[1])
+      match[2] === 'cm' ? numericString(150, 193) : numericString(59, 76)
+    return numParser.check(match[1])
   }),
   hcl: z.string().regex(/#[0-9a-f]{6}/),
   ecl: z.enum(['amb', 'blu', 'brn', 'gry', 'grn', 'hzl', 'oth']),
   pid: z
     .string()
     .length(9)
-    .refine((str) =>
-      z
-        .string()
-        .refine((str) => z.number().min(0).max(999999999).check(parseInt(str)))
-        .check(str)
-    ),
+    .refine((str) => numericString(0, 999999999).check(str)),
 }
 
 ;(() => {
