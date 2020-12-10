@@ -47,7 +47,6 @@ public class Nine {
                 sum -= next;
             }
         }
-        set.ro
 
         return set.first() + set.last();
     }
