@@ -86,19 +86,22 @@ function transform2(item: string, row: number, col: number, grid: string[][]) {
 function runStep(grid: string[][]): string[][] {
   flipped = false
   return grid.map((row, rowIdx) =>
-    row.map((status, colIdx) => transform2(status, rowIdx, colIdx, grid))
+    row.map((status, colIdx) => transform1(status, rowIdx, colIdx, grid))
   )
 }
 
 ;(() => {
   const file = fs.readFileSync(process.argv[2]).toString()
+
+  const start = Date.now()
+
   const lines = file.split('\n').filter((line) => line.trim())
 
   let grid = lines.map((line) => line.split(''))
   while (flipped) {
     grid = runStep(grid)
-    grid.forEach((row) => console.log(row.join('')))
-    console.log()
   }
   console.log(flatten(grid).filter((item) => item == '#').length)
+
+  console.log(Date.now() - start)
 })()
