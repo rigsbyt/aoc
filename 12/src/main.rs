@@ -3,62 +3,28 @@ use std::fs;
 
 #[derive(Copy, Clone, Debug)]
 enum Dir {
-    N = 0,
-    E = 90,
-    S = 180,
-    W = 270,
+    N(i32),
+    E(i32),
+    S(i32),
+    W(i32),
 }
 
 impl Dir {
-    fn from_val(val: i32) -> Dir {
-        match val {
-            0 => Dir::N,
-            90 => Dir::E,
-            180 => Dir::S,
-            270 => Dir::W,
-            _ => panic!("Invalid direction: {}", val),
-        }
-    }
-
-    fn rotate(&self, amount: &i32) -> Dir {
-        Dir::from_val(((*self as i32) + amount + 360) % 360)
-    }
-}
-
-#[derive(Debug)]
-struct Motion {
-    dir: Dir,
-    amount: i32,
-}
-
-impl Motion {
     fn execute(&self, pos: Position) -> Position {
         match *self {
-            Motion {
-                dir: Dir::N,
-                amount,
-            } => Position {
+            Dir::N(amount) => Position {
                 y: pos.y + amount,
                 ..pos
             },
-            Motion {
-                dir: Dir::E,
-                amount,
-            } => Position {
+            Dir::E(amount) => Position {
                 x: pos.x + amount,
                 ..pos
             },
-            Motion {
-                dir: Dir::S,
-                amount,
-            } => Position {
+            Dir::S(amount) => Position {
                 y: pos.y - amount,
                 ..pos
             },
-            Motion {
-                dir: Dir::W,
-                amount,
-            } => Position {
+            Dir::W(amount) => Position {
                 x: pos.x - amount,
                 ..pos
             },
@@ -66,53 +32,67 @@ impl Motion {
     }
 }
 
-#[derive(Debug)]
-enum Op {
-    F(i32),
+#[derive(Copy, Clone, Debug)]
+enum Rotation {
     L(i32),
     R(i32),
 }
 
-impl Op {
+impl Rotation {
     fn execute(&self, pos: Position) -> Position {
-        match *self {
-            Op::F(amount) => {
-                let motion = Motion {
-                    dir: pos.dir,
-                    amount: amount,
-                };
-                motion.execute(pos)
-            }
-            Op::R(amount) => Position {
-                dir: pos.dir.rotate(&amount),
-                ..pos
-            },
-            Op::L(amount) => Position {
-                dir: pos.dir.rotate(&(-1 * amount)),
-                ..pos
-            },
+        let degrees_clockwise = match *self {
+            Rotation::L(degrees) => -1 * degrees + 360,
+            Rotation::R(degrees) => degrees,
+        };
+
+        let num_rotations = degrees_clockwise / 90;
+
+        let mut result_pos = pos;
+        for _ in 0..num_rotations {
+            result_pos = Position {
+                x: result_pos.y,
+                y: -1 * result_pos.x,
+            };
+        }
+
+        result_pos
+    }
+}
+
+#[derive(Copy, Clone, Debug)]
+enum Forward {
+    F(i32),
+}
+
+impl Forward {
+    fn execute(&self, pos: Position, waypoint_rel: Position) -> Position {
+        let Forward::F(count) = *self;
+        Position {
+            x: pos.x + waypoint_rel.x * count,
+            y: pos.y + waypoint_rel.y * count,
         }
     }
 }
 
-#[derive(Debug)]
+#[derive(Copy, Clone, Debug)]
 enum Command {
-    Motion(Motion),
-    Op(Op),
+    Dir(Dir),
+    Rotation(Rotation),
+    Forward(Forward),
 }
 
 impl Command {
-    fn execute(&self, pos: Position) -> Position {
+    fn execute(&self, pos: Position, waypoint_rel: Position) -> (Position, Position) {
         match self {
-            Command::Motion(motion) => motion.execute(pos),
-            Command::Op(op) => op.execute(pos),
+            Command::Dir(dir) => (pos, dir.execute(waypoint_rel)),
+            Command::Rotation(rotation) => (pos, rotation.execute(waypoint_rel)),
+            Command::Forward(forward) => (forward.execute(pos, waypoint_rel), waypoint_rel),
         }
     }
 }
 
-#[derive(Debug)]
+#[derive(Copy, Clone, Debug)]
 struct Position {
-    dir: Dir,
     x: i32,
     y: i32,
 }
@@ -129,45 +109,33 @@ fn main() {
             let amount = &line[1..];
             let amount: i32 = String::from(amount).parse().expect("Couldn't parse number");
             match direction {
-                'N' => Command::Motion(Motion {
-                    dir: Dir::N,
-                    amount,
-                }),
-                'S' => Command::Motion(Motion {
-                    dir: Dir::S,
-                    amount,
-                }),
-                'E' => Command::Motion(Motion {
-                    dir: Dir::E,
-                    amount,
-                }),
-                'W' => Command::Motion(Motion {
-                    dir: Dir::W,
-                    amount,
-                }),
-                'L' => Command::Op(Op::L(amount)),
-                'R' => Command::Op(Op::R(amount)),
-                'F' => Command::Op(Op::F(amount)),
+                'N' => Command::Dir(Dir::N(amount)),
+                'S' => Command::Dir(Dir::S(amount)),
+                'E' => Command::Dir(Dir::E(amount)),
+                'W' => Command::Dir(Dir::W(amount)),
+                'L' => Command::Rotation(Rotation::L(amount)),
+                'R' => Command::Rotation(Rotation::R(amount)),
+                'F' => Command::Forward(Forward::F(amount)),
                 _ => panic!("Invalid command"),
             }
         })
         .collect();
 
-    let mut pos = Position {
-        dir: Dir::E,
-        x: 0,
-        y: 0,
-    };
+    let mut waypoint_rel = Position { x: 10, y: 1 };
+    let mut position = Position { x: 0, y: 0 };
 
     for command in commands {
-        pos = command.execute(pos);
-        println!("{:?}, {:?}", command, pos)
+        let (new_pos, new_way) = command.execute(position, waypoint_rel);
+        position = new_pos;
+        waypoint_rel = new_way;
+
+        println!("{:?}, {:?}, {:?}", command, position, waypoint_rel)
     }
 
     println!(
         "Pos: ({}, {}), Manhattan distance: {}",
-        pos.x,
-        pos.y,
-        pos.x + pos.y
+        position.x,
+        position.y,
+        position.x.abs() + position.y.abs()
     );
 }
