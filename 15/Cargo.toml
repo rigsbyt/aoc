@@ -1,0 +1,9 @@
+[package]
+name = "fifteen"
+version = "0.1.0"
+authors = ["tyler <tyler@98point6.com>"]
+edition = "2018"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
